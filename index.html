@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ufex — Universal File Explorer</title>
+<meta name="description" content="A cross-platform desktop application for inspecting the internal structure and metadata of binary files. Open source, free, your files never leave your computer.">
+<link rel="icon" type="image/png" href="app-icon-256.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,200;0,300;0,400;0,500;0,600;1,300;1,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ufex-sky:#7EC8F2;--ufex-blue:#4A9BE8;--ufex-deep:#3D8FDB;--ufex-ink:#1E5A9C;
+  --ufex-mist:#E8F4FC;--ufex-frost:#C5E4F7;--ufex-ice:#B8DCF5;--ufex-surface:#A0D4F0;
+  --ufex-graphite:#2A2E33;--ufex-slate:#606060;--ufex-stone:#888888;--ufex-silver:#A0A0A0;
+  --ufex-pearl:#E4E6E8;--ufex-paper:#F7F8FA;
+  --bg:#FBFCFD;--bg-elev:#FFFFFF;--text:#1A1D21;--text-soft:#4A5056;--text-faint:#8A9098;
+  --rule:#E4E6E8;--rule-soft:#F0F2F4;
+  --font-display:'IBM Plex Sans',-apple-system,BlinkMacSystemFont,sans-serif;
+  --font-body:'IBM Plex Sans',-apple-system,BlinkMacSystemFont,sans-serif;
+  --font-mono:'JetBrains Mono','SF Mono',Consolas,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+body{font-family:var(--font-body);font-size:16px;line-height:1.65;color:var(--text);background:var(--bg)}
+a{color:inherit;text-decoration:none}img,svg{display:block;max-width:100%}
+.shell{max-width:1200px;margin:0 auto;padding:0 40px}
+
+/* NAV */
+.nav{position:sticky;top:0;z-index:50;background:rgba(251,252,253,.85);backdrop-filter:saturate(180%) blur(16px);-webkit-backdrop-filter:saturate(180%) blur(16px);border-bottom:1px solid var(--rule-soft)}
+.nav-inner{display:flex;align-items:center;justify-content:space-between;padding:18px 0}
+.brand{display:flex;align-items:center;gap:12px}
+.brand img{width:32px;height:32px}
+.brand-name{font-family:var(--font-mono);font-size:20px;font-weight:500;color:var(--ufex-ink);letter-spacing:-.03em}
+.nav-links{display:flex;align-items:center;gap:8px}
+.nav-link{font-size:14px;color:var(--text-soft);padding:8px 14px;border-radius:6px;transition:color .15s,background .15s}
+.nav-link:hover{color:var(--text);background:var(--ufex-mist)}
+.nav-github{display:flex;align-items:center;gap:8px;padding:8px 14px;border-radius:6px;color:var(--text);font-size:14px;font-weight:500;transition:background .15s}
+.nav-github:hover{background:var(--ufex-mist)}
+.nav-github svg{width:18px;height:18px}
+.nav-download{display:flex;align-items:center;gap:8px;padding:9px 16px;background:var(--ufex-graphite);color:#fff;border-radius:6px;font-family:var(--font-mono);font-size:12px;letter-spacing:.03em;transition:background .15s}
+.nav-download:hover{background:#1a1d21}
+
+/* HERO */
+.hero{position:relative;padding:100px 0 60px;overflow:hidden}
+.hero::before{content:'';position:absolute;inset:0;background-image:radial-gradient(ellipse 1000px 700px at 85% -5%,rgba(126,200,242,.22),transparent 60%),radial-gradient(ellipse 700px 500px at -5% 50%,rgba(74,155,232,.08),transparent 55%);pointer-events:none;z-index:0}
+.hero-inner{position:relative;z-index:1}
+.hero h1{font-family:var(--font-display);font-size:clamp(48px,7.5vw,92px);font-weight:200;line-height:1;letter-spacing:-.05em;color:var(--text);max-width:18ch;margin-bottom:12px}
+.hero h1 em{font-style:normal;font-weight:400;color:var(--ufex-deep)}
+.hero-tagline{font-family:var(--font-display);font-weight:300;font-size:clamp(18px,2vw,22px);line-height:1.5;color:var(--text-soft);max-width:52ch;margin-bottom:12px;letter-spacing:-.005em}
+.hero-sub{font-size:16px;line-height:1.65;color:var(--text-soft);max-width:56ch;margin-bottom:44px}
+.hero-ctas{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:32px}
+.btn-primary{display:inline-flex;align-items:center;gap:12px;padding:16px 24px;background:var(--ufex-graphite);color:#fff;border-radius:8px;font-size:15px;font-weight:500;transition:background .2s,transform .2s,box-shadow .2s;box-shadow:0 1px 2px rgba(30,90,156,.06),0 8px 24px -8px rgba(42,46,51,.3)}
+.btn-primary:hover{background:#1a1d21;transform:translateY(-1px);box-shadow:0 1px 2px rgba(30,90,156,.06),0 12px 32px -8px rgba(42,46,51,.4)}
+.btn-primary svg{width:18px;height:18px}
+.btn-primary .platform-label{font-family:var(--font-mono);font-size:12px;color:var(--ufex-sky);letter-spacing:.04em}
+.btn-ghost{display:inline-flex;align-items:center;gap:10px;padding:16px 22px;color:var(--text);border:1px solid var(--rule);background:var(--bg-elev);border-radius:8px;font-size:15px;font-weight:500;transition:border-color .2s,background .2s}
+.btn-ghost:hover{border-color:var(--ufex-surface);background:var(--ufex-mist)}
+.btn-ghost svg{width:16px;height:16px}
+.hero-meta{display:flex;gap:28px;flex-wrap:wrap;font-family:var(--font-mono);font-size:12px;color:var(--text-faint);letter-spacing:.02em}
+.hero-meta span{display:inline-flex;align-items:center;gap:8px}
+.hero-meta .dot{width:5px;height:5px;border-radius:50%;background:var(--ufex-deep)}
+
+/* Hero app preview */
+.hero-preview{margin-top:80px;position:relative}
+.hero-preview::before{content:'';position:absolute;inset:-40px -10% auto -10%;height:100%;background:radial-gradient(ellipse 60% 80% at 50% 30%,rgba(126,200,242,.3),transparent 70%);z-index:-1;filter:blur(20px)}
+.app-window{background:#fff;border-radius:12px;border:1px solid var(--rule);overflow:hidden;box-shadow:0 1px 2px rgba(30,90,156,.04),0 40px 80px -30px rgba(30,90,156,.25),0 20px 40px -20px rgba(42,46,51,.15)}
+.app-titlebar{display:flex;align-items:center;padding:10px 16px;background:var(--ufex-paper);border-bottom:1px solid var(--rule);gap:8px}
+.app-titlebar .traffic{display:flex;gap:6px}
+.app-titlebar .traffic span{width:11px;height:11px;border-radius:50%;background:var(--ufex-pearl)}
+.app-titlebar .title{flex:1;text-align:center;font-family:var(--font-mono);font-size:11px;color:var(--text-faint);letter-spacing:.02em}
+.app-body{display:grid;grid-template-columns:220px 1fr;min-height:440px}
+.app-sidebar{background:var(--ufex-paper);border-right:1px solid var(--rule);padding:14px 10px}
+.sidebar-label{font-family:var(--font-mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-faint);padding:8px 10px;margin-top:8px}
+.sidebar-label:first-of-type{margin-top:0}
+.sidebar-item{display:flex;align-items:center;gap:10px;padding:7px 10px;border-radius:4px;font-size:13px;color:var(--text-soft);cursor:default}
+.sidebar-item .dot{width:6px;height:6px;border-radius:50%;background:var(--ufex-surface);flex-shrink:0}
+.sidebar-item.active{background:#fff;color:var(--ufex-ink);font-weight:500;box-shadow:0 1px 2px rgba(30,90,156,.05)}
+.sidebar-item.active .dot{background:var(--ufex-deep)}
+.app-main{padding:0;display:flex;flex-direction:column}
+.app-tabs{display:flex;gap:0;border-bottom:1px solid var(--rule);padding:0 20px;background:#fff}
+.app-tab{padding:14px 16px;font-size:13px;color:var(--text-soft);font-weight:500;border-bottom:2px solid transparent;margin-bottom:-1px;cursor:default}
+.app-tab.active{color:var(--ufex-deep);border-bottom-color:var(--ufex-deep)}
+.app-content{padding:24px 28px;flex:1;display:grid;grid-template-columns:1.4fr 1fr;gap:28px}
+.file-header{grid-column:1/-1;display:flex;align-items:center;gap:14px;padding-bottom:16px;border-bottom:1px solid var(--rule-soft);margin-bottom:8px}
+.file-icon{width:40px;height:40px;border-radius:6px;background:linear-gradient(135deg,var(--ufex-sky),var(--ufex-deep));display:flex;align-items:center;justify-content:center;color:#fff;font-family:var(--font-mono);font-size:11px;font-weight:600;letter-spacing:-.02em}
+.file-info-stack{display:flex;flex-direction:column;gap:2px}
+.file-name{font-family:var(--font-mono);font-size:14px;font-weight:500;color:var(--text);letter-spacing:-.01em}
+.file-sub{font-size:12px;color:var(--text-faint);font-family:var(--font-mono)}
+.info-grid{display:flex;flex-direction:column;gap:10px}
+.info-row{display:grid;grid-template-columns:110px 1fr;gap:16px;padding:8px 0;border-bottom:1px dashed var(--rule-soft);font-size:13px}
+.info-row:last-child{border-bottom:none}
+.info-key{color:var(--text-faint);font-family:var(--font-mono);font-size:11px;letter-spacing:.02em;text-transform:uppercase;padding-top:2px}
+.info-val{color:var(--text);font-family:var(--font-mono);font-size:13px}
+.info-val .tag{display:inline-block;padding:2px 8px;background:var(--ufex-mist);color:var(--ufex-ink);border-radius:3px;font-size:11px;margin-right:4px}
+.hex-preview{background:var(--ufex-paper);border:1px solid var(--rule);border-radius:6px;padding:14px;font-family:var(--font-mono);font-size:11px;line-height:1.8;overflow:hidden}
+.hex-row{display:grid;grid-template-columns:50px 1fr 90px;gap:12px}
+.hex-offset{color:var(--text-faint)}
+.hex-bytes{color:var(--text);letter-spacing:.02em}
+.hex-bytes .sig{color:var(--ufex-deep);font-weight:600;background:var(--ufex-mist);padding:0 2px;border-radius:2px}
+.hex-ascii{color:var(--text-faint)}
+
+/* SECTIONS */
+section{padding:100px 0}
+.section-title{font-family:var(--font-display);font-size:clamp(36px,4.5vw,56px);font-weight:200;letter-spacing:-.04em;line-height:1.1;max-width:22ch;margin-bottom:20px}
+.section-title em{font-style:normal;font-weight:400;color:var(--ufex-deep)}
+.section-lede{font-weight:300;font-size:18px;line-height:1.6;color:var(--text-soft);max-width:58ch;letter-spacing:-.005em}
+
+/* VIEWS */
+.views{border-top:1px solid var(--rule-soft)}
+.views-stack{display:flex;flex-direction:column;gap:80px;margin-top:48px}
+.view-row{display:grid;grid-template-columns:1fr 1.3fr;gap:60px;align-items:center}
+.view-row.flipped{grid-template-columns:1.3fr 1fr}
+.view-row.flipped .view-copy{order:2}
+.view-row.flipped .view-shot{order:1}
+.view-copy h3{font-family:var(--font-display);font-size:32px;font-weight:300;letter-spacing:-.03em;line-height:1.2;margin-bottom:20px}
+.view-copy h3 em{font-style:normal;font-weight:500;color:var(--ufex-deep)}
+.view-copy p{font-size:16px;color:var(--text-soft);line-height:1.7;margin-bottom:16px}
+.view-bullets{list-style:none;margin-top:20px;display:flex;flex-direction:column;gap:10px}
+.view-bullets li{display:flex;align-items:flex-start;gap:12px;font-size:14px;color:var(--text-soft)}
+.view-bullets li::before{content:'—';color:var(--ufex-deep);font-family:var(--font-mono);flex-shrink:0;margin-top:-1px}
+.view-shot{padding:10px;position:relative}
+.view-shot-inner{border-radius:6px;overflow:hidden;background:var(--ufex-paper);min-height:380px;position:relative;display:flex;flex-direction:column}
+.placeholder-badge{position:absolute;top:20px;right:20px;font-family:var(--font-mono);font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:var(--text-faint);background:rgba(255,255,255,.85);backdrop-filter:blur(4px);padding:4px 8px;border-radius:3px;border:1px solid var(--rule);z-index:2}
+.shot-header{display:flex;align-items:center;gap:10px;padding:10px 14px;background:#fff;border-bottom:1px solid var(--rule)}
+.shot-header .dot3{display:flex;gap:5px}
+.shot-header .dot3 span{width:9px;height:9px;border-radius:50%;background:var(--ufex-pearl)}
+.shot-header .title{font-family:var(--font-mono);font-size:10px;color:var(--text-faint);letter-spacing:.03em}
+.shot-body{flex:1;padding:18px 20px;display:flex;flex-direction:column;gap:14px;background:#fff}
+
+/* INFO shot */
+.shot-info-row{display:grid;grid-template-columns:100px 1fr;gap:12px;padding:6px 0;border-bottom:1px dashed var(--rule-soft);font-size:12px;font-family:var(--font-mono)}
+.shot-info-row:last-child{border-bottom:none}
+.shot-info-row .k{color:var(--text-faint);text-transform:uppercase;letter-spacing:.08em;font-size:10px;padding-top:2px}
+.shot-info-row .v{color:var(--text)}
+
+/* VISUAL shot */
+.filemap-container{display:flex;flex-direction:column;gap:6px}
+.filemap-label{font-family:var(--font-mono);font-size:10px;color:var(--text-faint);letter-spacing:.08em;text-transform:uppercase}
+.filemap{display:grid;grid-template-columns:repeat(16,1fr);gap:2px;height:160px}
+.filemap .cell{border-radius:2px;background:var(--ufex-mist)}
+.filemap .cell.hd{background:var(--ufex-deep)}.filemap .cell.dt{background:var(--ufex-blue)}.filemap .cell.pt{background:var(--ufex-sky)}.filemap .cell.md{background:var(--ufex-surface)}.filemap .cell.fr{background:var(--ufex-frost)}
+.filemap-legend{display:flex;flex-wrap:wrap;gap:12px 20px;font-family:var(--font-mono);font-size:10px;color:var(--text-soft);margin-top:8px}
+.filemap-legend span{display:inline-flex;align-items:center;gap:6px}
+.filemap-legend .sw{width:10px;height:10px;border-radius:2px}
+
+/* HEX shot */
+.hex-viewer{font-family:var(--font-mono);font-size:11px;line-height:1.7;display:flex;flex-direction:column;gap:1px;background:var(--ufex-paper);border-radius:4px;padding:12px;border:1px solid var(--rule-soft)}
+.hex-hdr{display:grid;grid-template-columns:60px 1fr 120px;gap:12px;padding-bottom:6px;border-bottom:1px solid var(--rule-soft);color:var(--text-faint);font-size:10px;letter-spacing:.08em;text-transform:uppercase}
+.hex-line{display:grid;grid-template-columns:60px 1fr 120px;gap:12px}
+.hex-line .off{color:var(--text-faint)}.hex-line .bt{color:var(--text);letter-spacing:.03em}.hex-line .bt .hl{background:var(--ufex-mist);color:var(--ufex-deep);font-weight:600;padding:0 2px;border-radius:2px}.hex-line .as{color:var(--text-faint)}
+.hex-search{display:flex;align-items:center;gap:8px;padding:6px 10px;background:#fff;border:1px solid var(--rule);border-radius:4px;font-family:var(--font-mono);font-size:11px;color:var(--text-soft)}
+.hex-search .q{color:var(--ufex-deep)}.hex-search .n{margin-left:auto;color:var(--text-faint);font-size:10px}
+
+/* STRUCTURE shot */
+.structure-grid{display:grid;grid-template-columns:1fr 1.2fr;gap:14px;height:100%;min-height:280px}
+.structure-tree{background:var(--ufex-paper);border:1px solid var(--rule-soft);border-radius:4px;padding:10px;font-family:var(--font-mono);font-size:11px;line-height:1.9}
+.tree-node{display:flex;align-items:center;gap:6px;padding:1px 4px;color:var(--text-soft);border-radius:3px}
+.tree-node .carat{color:var(--text-faint);width:10px}
+.tree-node.selected{background:var(--ufex-mist);color:var(--ufex-ink);font-weight:500}
+.tree-node.indent1{padding-left:14px}.tree-node.indent2{padding-left:26px}
+.structure-detail{background:var(--ufex-paper);border:1px solid var(--rule-soft);border-radius:4px;padding:12px;display:flex;flex-direction:column;gap:8px}
+.detail-row{display:grid;grid-template-columns:80px 50px 1fr;gap:8px;font-family:var(--font-mono);font-size:10px;padding:4px 0;border-bottom:1px dashed var(--rule-soft)}
+.detail-row:last-child{border-bottom:none}
+.detail-row .field{color:var(--text)}.detail-row .off{color:var(--text-faint)}.detail-row .val{color:var(--ufex-deep)}
+.detail-header{font-family:var(--font-mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-faint);display:grid;grid-template-columns:80px 50px 1fr;gap:8px;padding-bottom:4px;border-bottom:1px solid var(--rule)}
+
+/* VALIDATION shot */
+.validation-list{display:flex;flex-direction:column;gap:8px}
+.val-row{display:grid;grid-template-columns:20px 60px 1fr;gap:12px;align-items:start;padding:10px 12px;border:1px solid var(--rule-soft);border-radius:4px;font-size:12px;background:#fff}
+.val-row .icon{width:14px;height:14px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:9px;color:#fff;font-weight:700;margin-top:2px}
+.val-row.info{border-left:3px solid var(--ufex-deep)}.val-row.info .icon{background:var(--ufex-deep)}
+.val-row.warn{border-left:3px solid #D88C1F}.val-row.warn .icon{background:#D88C1F}
+.val-row.err{border-left:3px solid #C84040}.val-row.err .icon{background:#C84040}
+.val-row .lvl{font-family:var(--font-mono);font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--text-faint);padding-top:2px}
+.val-row .msg{color:var(--text);line-height:1.5}
+.val-row .msg .offset{font-family:var(--font-mono);font-size:10px;color:var(--text-faint);margin-top:2px;display:block}
+
+/* CAPABILITIES */
+.caps{border-top:1px solid var(--rule-soft);background:var(--ufex-paper)}
+.caps-grid{margin-top:56px;display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--rule);border:1px solid var(--rule);border-radius:8px;overflow:hidden}
+.cap{background:#fff;padding:32px 28px;display:flex;flex-direction:column;gap:10px}
+.cap-icon{width:36px;height:36px;border-radius:8px;background:var(--ufex-mist);display:flex;align-items:center;justify-content:center;color:var(--ufex-deep);margin-bottom:8px}
+.cap-icon svg{width:18px;height:18px}
+.cap h3{font-family:var(--font-display);font-size:18px;font-weight:500;letter-spacing:-.01em;color:var(--text)}
+.cap p{font-size:14px;color:var(--text-soft);line-height:1.6}
+
+/* DOWNLOAD */
+.download{border-top:1px solid var(--rule-soft)}
+.download-inner{display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:start}
+.download-copy .section-title{margin-bottom:24px}
+.download-grid{display:flex;flex-direction:column;gap:12px}
+.dl-card{display:grid;grid-template-columns:44px 1fr auto;gap:20px;align-items:center;padding:20px 24px;border:1px solid var(--rule);border-radius:8px;background:var(--bg-elev);transition:border-color .2s,background .2s,transform .2s}
+.dl-card:hover{border-color:var(--ufex-surface);background:#fff;transform:translateX(2px)}
+.dl-card .os-icon{width:40px;height:40px;border-radius:8px;background:var(--ufex-mist);color:var(--ufex-deep);display:flex;align-items:center;justify-content:center}
+.dl-card .os-icon svg{width:22px;height:22px}
+.dl-card .os-info{display:flex;flex-direction:column;gap:2px}
+.dl-card .os-name{font-size:15px;font-weight:500;color:var(--text)}
+.dl-card .os-format{font-family:var(--font-mono);font-size:11px;color:var(--text-faint);letter-spacing:.02em}
+.dl-card .os-arrow{color:var(--text-faint);transition:color .2s,transform .2s}
+.dl-card:hover .os-arrow{color:var(--ufex-deep);transform:translateX(2px)}
+.download-note{margin-top:20px;font-family:var(--font-mono);font-size:12px;color:var(--text-faint);line-height:1.8}
+.download-note a{color:var(--ufex-deep);border-bottom:1px dashed var(--ufex-surface)}
+.download-note a:hover{border-bottom-style:solid}
+
+/* FOOTER */
+footer{border-top:1px solid var(--rule);padding:60px 0 40px;background:var(--ufex-graphite);color:var(--ufex-pearl)}
+.footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr;gap:48px;align-items:start}
+.footer-brand{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.footer-brand img{width:36px;height:36px}
+.footer-brand .t{font-family:var(--font-mono);font-size:22px;font-weight:500;color:var(--ufex-sky);letter-spacing:-.03em}
+.footer-tag{font-weight:300;font-size:15px;color:var(--ufex-silver);max-width:34ch;line-height:1.55}
+.footer-col h5{font-family:var(--font-mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--ufex-sky);margin-bottom:14px;font-weight:500}
+.footer-col a,.footer-col p{display:block;font-size:13px;color:var(--ufex-silver);line-height:2;transition:color .15s}
+.footer-col a:hover{color:var(--ufex-sky)}
+.footer-meta{margin-top:50px;padding-top:20px;border-top:1px solid rgba(255,255,255,.08);display:flex;justify-content:space-between;align-items:center;font-family:var(--font-mono);font-size:11px;color:var(--ufex-stone);letter-spacing:.03em;flex-wrap:wrap;gap:12px}
+
+/* RESPONSIVE */
+@media(max-width:900px){
+  .shell{padding:0 24px}section{padding:70px 0}.hero{padding:60px 0 40px}
+  .nav-links .nav-link{display:none}
+  .app-body{grid-template-columns:1fr;min-height:0}
+  .app-sidebar{border-right:none;border-bottom:1px solid var(--rule);display:flex;flex-wrap:wrap;gap:4px;padding:10px}
+  .app-sidebar .sidebar-label{display:none}
+  .app-sidebar .sidebar-item{padding:6px 10px;font-size:12px}
+  .app-content{grid-template-columns:1fr;gap:20px;padding:18px}
+  .view-row,.view-row.flipped{grid-template-columns:1fr;gap:32px}
+  .view-row.flipped .view-copy{order:0}
+  .view-row.flipped .view-shot{order:0}
+  .caps-grid{grid-template-columns:1fr}
+  .download-inner{grid-template-columns:1fr;gap:32px}
+  .footer-grid{grid-template-columns:1fr 1fr;gap:32px}
+  .footer-meta{flex-direction:column;align-items:flex-start}
+}
+@media(max-width:600px){
+  .footer-grid{grid-template-columns:1fr}
+  .hero-ctas{flex-direction:column;align-items:stretch}
+  .hero-ctas>*{justify-content:center}
+}
+</style>
+</head>
+<body>
+
+<nav class="nav"><div class="shell nav-inner">
+  <a href="#" class="brand"><img src="app-icon-256.png" alt="ufex icon"><span class="brand-name">ufex</span></a>
+  <div class="nav-links">
+    <a href="#views" class="nav-link">Views</a>
+    <a href="#capabilities" class="nav-link">Capabilities</a>
+    <a href="#download" class="nav-link">Download</a>
+    <a href="https://github.com/ufex/Ufex" class="nav-github" aria-label="GitHub" target="_blank" rel="noopener">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
+      <span>GitHub</span>
+    </a>
+    <a href="#download" class="nav-download"><span>Download</span></a>
+  </div>
+</div></nav>
+
+<header class="hero"><div class="shell hero-inner">
+  <h1>Universal <br>File Explorer</h1>
+  <p class="hero-sub">A cross-platform desktop application for inspecting the internal structure and metadata of files. Hex data, parsed structure, visual layout, and validation results — all in one place.</p>
+  <div class="hero-ctas">
+    <a href="#download" class="btn-primary" id="heroDownloadBtn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      <span>Download for <span id="heroPlatform">your platform</span></span>
+      <span class="platform-label" id="heroPlatformFmt"></span>
+    </a>
+    <a href="https://github.com/ufex/Ufex" class="btn-ghost" target="_blank" rel="noopener">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
+      <span>View on GitHub</span>
+    </a>
+  </div>
+  <div class="hero-meta">
+    <span><span class="dot"></span>Windows · macOS · Linux</span>
+    <span><span class="dot"></span>Apache 2.0 licensed</span>
+    <span><span class="dot"></span>Files never leave your computer</span>
+  </div>
+  <div class="hero-preview">
+	<img src="screenshots/app.png">
+  </div>
+</div></header>
+
+<section class="views" id="views"><div class="shell">
+  <h2 class="section-title">Views</h2>
+  <div class="views-stack">
+
+    <!-- INFO — copy left, shot right -->
+    <div class="view-row">
+      <div class="view-copy"><h3><em>Info</em></h3><p>Everything you need to know about the file without opening it in a dedicated tool: filesystem attributes, format-specific metadata, key/value details pulled straight from the file's header.</p><ul class="view-bullets"><li>File system attributes — size, timestamps, permissions</li><li>Format-specific metadata from the parser plugin</li><li>Key/value pairs for quick reference and copy-paste</li><li>Identified type, MIME, and matched signature</li></ul></div>
+      <div class="view-shot"><img src="screenshots/info.png"></div>
+    </div>
+
+    <!-- VISUAL — shot left, copy right (flipped) -->
+    <div class="view-row flipped">
+      <div class="view-copy"><h3><em>Visual</em></h3><p>Graphical representations that depend on the format. File maps show how a file divides into segments. Image files render inline. Plugin authors can contribute whatever visualization makes the format legible.</p><ul class="view-bullets"><li>File map with color-coded segment proportions</li><li>Embedded image previews for image formats</li><li>Custom visualizations per plugin</li><li>Click segments to jump to the matching bytes</li></ul></div>
+      <div class="view-shot"><img src="screenshots/visual.png"></div>
+    </div>
+
+    <!-- HEX — copy left, shot right -->
+    <div class="view-row">
+      <div class="view-copy"><h3><em>Hex</em></h3><p>A proper hex viewer with synchronized offset, byte, and ASCII columns. Search for byte patterns or text. Display numeric values in hex, decimal, binary, or ASCII with a single toggle.</p><ul class="view-bullets"><li>Synchronized hex and ASCII columns</li><li>Search for byte patterns or text strings</li><li>Highlighted matches jump into view</li><li>Toggle numeric display modes globally</li></ul></div>
+      <div class="view-shot"><img src="screenshots/hex.png"></div>
+    </div>
+
+    <!-- STRUCTURE — shot left, copy right (flipped) -->
+    <div class="view-row flipped">
+      <div class="view-copy"><h3><em>Structure</em></h3><p>A tree of the file's segments with a detail panel. Expand nodes to drill into nested records. Select any node to see its fields, offsets, and decoded values side-by-side.</p><ul class="view-bullets"><li>Interactive tree of parsed segments</li><li>Detail panel with field / offset / value columns</li><li>Offsets link back to the hex view</li><li>Plugin-defined — every format parses differently</li></ul></div>
+      <div class="view-shot"><img src="screenshots/structure.png"></div>
+    </div>
+
+    <!-- VALIDATION — copy left, shot right -->
+    <div class="view-row">
+      <div class="view-copy"><h3><em>Validation</em></h3><p>Each format plugin can emit a validation log: info, warnings, and errors that point to specific offsets. Useful for debugging corrupted files or spotting files that don't follow the spec.</p><ul class="view-bullets"><li>Info, warning, and error levels with offsets</li><li>Format-specific checks from the plugin</li><li>Links to the exact byte ranges involved</li><li>Spot malformed or out-of-spec files at a glance</li></ul></div>
+      <div class="view-shot"><img src="screenshots/validation.png"></div>
+    </div>
+
+  </div>
+</div></section>
+
+<section class="caps" id="capabilities"><div class="shell">
+  <h2 class="section-title">Capabilities</h2>
+  <p class="section-lede">The details that matter when you use a tool every day — fast identification, clean shortcuts, an extension model that doesn't require forking the project.</p>
+  <div class="caps-grid">
+    <div class="cap"><div class="cap-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4"/><path d="M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9c2.12 0 4.07.74 5.61 1.97"/></svg></div><h3>Signature-based identification</h3><p>Detects format from magic bytes, extension, and MIME type together. The signature database is XML-driven and extendable without writing code.</p></div>
+    <div class="cap"><div class="cap-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div><h3>Drag &amp; drop</h3><p>Open a file by dropping it on the window. No project concept, no workspace to manage — ufex is a single-file utility by design.</p></div>
+    <div class="cap"><div class="cap-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div><h3>Search across bytes and text</h3><p>Find byte patterns or text within the file. Matches highlight in the hex view and jump into position on selection.</p></div>
+    <div class="cap"><div class="cap-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg></div><h3>Plugin architecture</h3><p>Add new formats by dropping a .NET assembly in the <code style="font-family:var(--font-mono);font-size:13px;background:var(--ufex-mist);padding:1px 5px;border-radius:3px;color:var(--ufex-ink)">plugins/</code> folder. Reference the Ufex.API, parse, emit structure. Third parties can ship support without touching core.</p></div>
+    <div class="cap"><div class="cap-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg></div><h3>Number format toggle</h3><p>Switch between hexadecimal, decimal, binary, and ASCII for numeric values throughout the UI — useful when a spec thinks in one base and you think in another.</p></div>
+    <div class="cap"><div class="cap-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div><h3>Fast, lightweight, local</h3><p>Built on .NET and Avalonia. No cloud, no account, no telemetry. Your files never leave your machine.</p></div>
+  </div>
+</div></section>
+
+<section class="download" id="download"><div class="shell"><div class="download-inner">
+  <div class="download-copy">
+    <h2 class="section-title">Download</h2>
+    <p class="section-lede">Pick your installer and go. All builds are produced by GitHub Actions from the source in the public repository — you can verify every release.</p>
+  </div>
+  <div class="download-grid">
+    <a href="https://github.com/ufex/Ufex/releases" class="dl-card" target="_blank" rel="noopener"><div class="os-icon"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 5.479l7.377-1.005v7.13H3V5.479zm0 13.042l7.377 1.005v-7.037H3v6.032zm8.188 1.12L21 21v-8.482h-9.812V19.64zm0-15.3v7.25H21V3l-9.812 1.34z"/></svg></div><div class="os-info"><span class="os-name">Windows</span><span class="os-format">MSI · x64 · 10 and later</span></div><svg class="os-arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></a>
+    <a href="https://github.com/ufex/Ufex/releases" class="dl-card" target="_blank" rel="noopener"><div class="os-icon"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg></div><div class="os-info"><span class="os-name">macOS</span><span class="os-format">DMG · Apple Silicon &amp; Intel</span></div><svg class="os-arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></a>
+    <a href="https://github.com/ufex/Ufex/releases" class="dl-card" target="_blank" rel="noopener"><div class="os-icon"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.5 2C9.458 2 8.17 4.554 8.17 5.912v2.75c0 .427-.16 1.049-.505 1.734-.388.77-.964 1.55-1.557 2.36l-1.93 2.636c-.81 1.1-1.43 2.12-1.43 3.18 0 .75.36 1.42 1.01 1.93-.36.24-.58.52-.58.83 0 .47.34.84.85 1.06.65.27 1.55.36 2.5.36.95 0 1.85-.09 2.5-.36.51-.22.85-.59.85-1.06 0-.04-.005-.08-.01-.12.43.36 1.07.68 2.13.68 1.06 0 1.7-.32 2.13-.68-.005.04-.01.08-.01.12 0 .47.34.84.85 1.06.65.27 1.55.36 2.5.36.95 0 1.85-.09 2.5-.36.51-.22.85-.59.85-1.06 0-.31-.22-.59-.58-.83.65-.51 1.01-1.18 1.01-1.93 0-1.06-.62-2.08-1.43-3.18l-1.93-2.636c-.593-.81-1.169-1.59-1.557-2.36-.345-.685-.505-1.307-.505-1.734v-2.75C16.83 4.554 15.542 2 12.5 2z"/></svg></div><div class="os-info"><span class="os-name">Linux</span><span class="os-format">AppImage · x64 · portable</span></div><svg class="os-arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></a>
+    <p class="download-note">All releases, changelogs, and previous versions are on <a href="https://github.com/ufex/Ufex/releases" target="_blank" rel="noopener">GitHub Releases</a>. Source code is on the <a href="https://github.com/ufex/Ufex" target="_blank" rel="noopener">project repository</a>. Licensed under Apache 2.0.</p>
+  </div>
+</div></div></section>
+
+<footer><div class="shell">
+  <div class="footer-grid">
+    <div><div class="footer-brand"><img src="app-icon-256.png" alt=""><span class="t">ufex</span></div><p class="footer-tag">Universal File Explorer — a cross-platform desktop tool for inspecting the internal structure and metadata of files.</p></div>
+    <div class="footer-col"><h5>— Project</h5><a href="https://github.com/ufex/Ufex" target="_blank" rel="noopener">Repository</a><a href="https://github.com/ufex/Ufex/releases" target="_blank" rel="noopener">Releases</a><a href="https://github.com/ufex/Ufex/wiki" target="_blank" rel="noopener">Documentation</a><a href="https://github.com/ufex" target="_blank" rel="noopener">Organization</a></div>
+    <div class="footer-col"><h5>— License</h5><p>Apache 2.0</p><p>Open source</p><p>No telemetry</p></div>
+  </div>
+  <div class="footer-meta"><span>ufex · open-source software</span><span>made in the open · 2026</span></div>
+</div></footer>
+
+<script>
+(function(){const ua=navigator.userAgent.toLowerCase(),pe=document.getElementById('heroPlatform'),fe=document.getElementById('heroPlatformFmt');if(!pe||!fe)return;let p='your platform',f='';if(ua.includes('win')){p='Windows';f='.MSI'}else if(ua.includes('mac')){p='macOS';f='.DMG'}else if(ua.includes('linux')){p='Linux';f='.APPIMAGE'}pe.textContent=p;fe.textContent=f})();
+(function(){const m=document.getElementById('filemap');if(!m)return;const p=['hd','md','md','pt','pt','pt','dt','dt','dt','dt','dt','dt','dt','dt','dt','dt','dt','dt','dt','dt','dt','dt','dt','dt','dt','dt','dt','dt','dt','dt','dt','dt','dt','dt','dt','dt','dt','dt','md','md','dt','dt','dt','dt','dt','dt','dt','dt','dt','dt','dt','dt','dt','dt','dt','dt','dt','dt','dt','dt','dt','dt','dt','dt','dt','dt','dt','dt','dt','dt','dt','dt','dt','dt','dt','dt','dt','dt','md','md','md','dt','dt','dt','dt','dt','dt','dt','dt','dt','dt','dt','dt','dt','dt','dt','dt','dt','dt','dt','dt','dt','dt','dt','dt','dt','dt','dt','dt','dt','dt','dt','dt','dt','dt','dt','dt','dt','dt','dt','dt','md','md','dt','dt','dt','dt','fr'];while(p.length<128)p.push('dt');m.innerHTML=p.slice(0,128).map(c=>`<div class="cell ${c}"></div>`).join('')})();
+</script>
+</body>
+</html>
